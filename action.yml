@@ -1,0 +1,23 @@
+name: 'Judger for Covellite'
+description: 'Judge a test case'
+inputs:
+  executable:
+    description: 'Compiled executable path'
+    required: true
+  problem-repo:
+    description: 'Problem storage repository'
+    required: true
+    default: 'https://github.com/pcovellite/problem'
+  problem-id:
+    description: 'Problem storage branch id'
+    required: true
+outputs:
+  total-time:
+    description: 'Total used time'
+  result:
+    description: 'Result'
+  result-friendly:
+    description: 'Well-formatted result'
+runs:
+  using: 'node12'
+  main: 'index.js'
