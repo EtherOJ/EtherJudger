@@ -38,7 +38,8 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/
+# This is an Action, and thus no install, so leave node_modules in the repo
+# node_modules/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -82,7 +83,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/

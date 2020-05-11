@@ -10,7 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@actions/artifact": "^0.3.1",
     "@actions/core": "^1.2.4",
-    "@actions/github": "^2.2.0"
+    "@actions/exec": "^1.0.4",
+    "@actions/github": "^2.2.0",
+    "yaml": "^1.9.2"
   }
 }
