@@ -23,12 +23,12 @@ class Problem {
             const suffix = k.slice(-1)[0];
             if(/^(in|ans)$/g.test(suffix)){
                 const name = k.slice(0,-1).join('.');
-                if(parseInt(name)) {
-                    if(cases[name]) cases[name][`${suffix}File`] = f;
-                    else cases[name] = { 
-                        [`${suffix}File`]: f,
-                    };
-                }
+                // if(parseInt(name)) {
+                if(cases[name]) cases[name][`${suffix}File`] = f;
+                else cases[name] = { 
+                    [`${suffix}File`]: f,
+                };
+                // }
             }
         }
         for(const el of Object.keys(cases)){
