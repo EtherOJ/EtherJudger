@@ -60,76 +60,90 @@ class Judger {
         let ln = 1, col = 1;
         for(const i in istr){
             if(i >= astr.length) {
-                core.setFailed('Unexpected EOF while reading answer.');
-                return false;
+                return 'Unexpected EOF while reading answer.';
             }
             if(istr[i] !== astr[i]) {
-                core.setFailed(`Expected ${escape(astr[i])} but found ${escape(istr[i])} at ${ln}:${col}`);
-                return false;
+                return `Expected ${escape(astr[i])} but found ${escape(istr[i])} at ${ln}:${col}`;
             }
             if(istr[i] === '\n') [ln,col] = [ln+1,1];
             else col++;
         }
         if(istr.length != astr.length) {
-            core.setFailed('Unexpected EOF while reading output.');
-            return false;
+            return 'Unexpected EOF while reading output.';
         }
 
-        return true;
+        return null;
     }
 
-    async runSol(inFile, outf) {
-        const args = this.buildExecArgs(this.executable, inFile, outf);
+
+
+    async testCase(i, e) {
+
+        function __fail(reason, result){
+            console.log(result);
+            core.setFailed(`[${i}] ${reason}`);
+            core.endGroup();
+        }
+
+        core.startGroup(`Test Case ${i}`);
+
+        const outf = `${this.problem.baseDir}/outFile.out`;
+        const inf  = `${this.problem.baseDir}/testcase/${e.inFile}`;
+        const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
         
+        const args = this.buildExecArgs(this.executable, inf, outf);
+
+        let result;
         try {
             const scr = `sudo ${__dirname}/libjudger.so ${args.join(' ')}`;
-            return JSON.parse((await exec(scr)).stdout.trim());
+            result = JSON.parse((await exec(scr)).stdout.trim());
         } catch (e) {
-            core.error(e);
-            core.setFailed('Unknown Error');
+            __fail(e, {});
+            return;
         }
+        
+        switch(+result.result) {
+        case 0: break;
+        case ResultEnum.CPU_TIME_LIMIT_EXCEEDED:
+        case ResultEnum.REAL_TIME_LIMIT_EXCEEDED:
+            __fail('Time Limit Exceeded', result);
+            return;
+        case ResultEnum.MEMORY_LIMIT_EXCEEDED:
+            __fail('Memory Limit Exceeded', result);
+            return;
+        case ResultEnum.RUNTIME_ERROR:
+            __fail('Runtime Error', result);
+            return;
+        case ResultEnum.SYSTEM_ERROR:
+        default:
+            __fail(`System Error ${result.error}`, result);
+            return;
+        }
+
+        const ansC = fs.readFileSync(ansf).toString();
+        const outC = fs.readFileSync(outf).toString();
+        
+        const diffResult = this.diff(ansC, outC);
+        if(diffResult) {
+            result.result = ResultEnum.WRONG_ANSWER;
+            __fail(diffResult, result);
+            return;
+        }
+
+        console.log(result);
+        core.endGroup();
     }
-
+    
     async testAll() {
-
-        for(const i of Object.keys(this.problem.cases)) {
-            core.startGroup(`Test Case ${i}`);
+        const caseKeys = Object.keys(this.problem.cases);
+        caseKeys.sort((a, b) => {
+            const ia = parseInt(a.match(/\d+/g).join(''));
+            const ib = parseInt(b.match(/\d+/g).join(''));
+            return ia - ib;
+        });
+        for(const i of caseKeys) {
             const e = this.problem.cases[i];
-            
-            const outf = `${this.problem.baseDir}/outFile.out`;
-            const inf  = `${this.problem.baseDir}/testcase/${e.inFile}`;
-            const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
-            
-            const result = await this.runSol(inf,outf);
-
-            if((+result.result) != 0) console.log(result);
-
-            switch(+result.result) {
-            case 0: break;
-            case ResultEnum.CPU_TIME_LIMIT_EXCEEDED:
-            case ResultEnum.REAL_TIME_LIMIT_EXCEEDED:
-                core.setFailed('Time Limit Exceeded');
-                continue;
-            case ResultEnum.MEMORY_LIMIT_EXCEEDED:
-                core.setFailed('Memory Limit Exceeded');
-                continue;
-            case ResultEnum.RUNTIME_ERROR:
-                core.setFailed('Runtime Error');
-                continue;
-            case ResultEnum.SYSTEM_ERROR:
-            default:
-                core.setFailed(`System Error ${result.error}`);
-                continue;
-            }
-
-            const ansC = fs.readFileSync(ansf).toString();
-            const outC = fs.readFileSync(outf).toString();
-            
-            const diffResult = this.diff(ansC, outC);
-            result.result = diffResult? 0 : ResultEnum.WRONG_ANSWER;
-
-            console.log(result);
-            core.endGroup();
+            this.testCase(i, e);
         }
     }
 }
