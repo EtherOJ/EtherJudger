@@ -61,19 +61,21 @@ class Judger {
         for(const i in istr){
             if(i >= astr.length) {
                 core.setFailed('Unexpected EOF while reading answer.');
-                return;
+                return false;
             }
             if(istr[i] !== astr[i]) {
                 core.setFailed(`Expected ${escape(astr[i])} but found ${escape(istr[i])} at ${ln}:${col}`);
-                return;
+                return false;
             }
             if(istr[i] === '\n') [ln,col] = [ln+1,1];
             else col++;
         }
         if(istr.length != astr.length) {
             core.setFailed('Unexpected EOF while reading output.');
-            return;
+            return false;
         }
+
+        return true;
     }
 
     async runSol(inFile, outf) {
@@ -99,13 +101,34 @@ class Judger {
             const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
             
             const result = await this.runSol(inf,outf);
-            console.log(result);
-            
+
+            if((+result.result) != 0) console.log(result);
+
+            switch(+result.result) {
+            case 0: break;
+            case ResultEnum.CPU_TIME_LIMIT_EXCEEDED:
+            case ResultEnum.REAL_TIME_LIMIT_EXCEEDED:
+                core.setFailed('Time Limit Exceeded');
+                continue;
+            case ResultEnum.MEMORY_LIMIT_EXCEEDED:
+                core.setFailed('Memory Limit Exceeded');
+                continue;
+            case ResultEnum.RUNTIME_ERROR:
+                core.setFailed('Runtime Error');
+                continue;
+            case ResultEnum.SYSTEM_ERROR:
+            default:
+                core.setFailed(`System Error ${result.error}`);
+                continue;
+            }
+
             const ansC = fs.readFileSync(ansf).toString();
             const outC = fs.readFileSync(outf).toString();
-            // console.log(ansC,outC);
-            this.diff(ansC, outC);
+            
+            const diffResult = this.diff(ansC, outC);
+            result.result = diffResult? 0 : ResultEnum.WRONG_ANSWER;
 
+            console.log(result);
             core.endGroup();
         }
     }
