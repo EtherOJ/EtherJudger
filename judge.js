@@ -129,6 +129,7 @@ class Judger {
         }
 
         console.log(result);
+        return true;
     }
 
     async testAll() {
@@ -138,12 +139,19 @@ class Judger {
             const ib = parseInt(b.match(/\d+/g).join(''));
             return ia - ib;
         });
+
+        let [total, good] = [0, 0];
         for(const i of caseKeys) {
             core.startGroup(`Test Case ${i}`);
-            const e = this.problem.cases[i];
-            await this.testCase(i, e);
+
+            const ret = await this.testCase(i, this.problem.cases[i]);
+            total++, good += !!ret;
+
             core.endGroup();
         }
+
+        const spc = this.problem.conf.score_per_testcase || (100/total | 0);
+        core.info(`${good} of ${total} cases passed, scored ${good * spc}`);
     }
 }
 
