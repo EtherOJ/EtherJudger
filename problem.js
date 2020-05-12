@@ -1,5 +1,4 @@
 const yaml = require('yaml');
-const core = require('@actions/core');
 const fs = require('fs');
 
 class Problem {
