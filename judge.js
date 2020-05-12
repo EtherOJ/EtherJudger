@@ -141,7 +141,7 @@ class Judger {
         for(const i of caseKeys) {
             core.startGroup(`Test Case ${i}`);
             const e = this.problem.cases[i];
-            this.testCase(i, e);
+            await this.testCase(i, e);
             core.endGroup();
         }
     }
