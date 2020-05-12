@@ -44,11 +44,11 @@ class Judger {
                  `--max_output_size=134217728`,
                  );
         
-        if(this.problem.time_limit) {
+        if(this.problem.conf.time_limit) {
             ret.push(`--max_real_time=${this.problem.time_limit}`);
         }
         
-        if(this.problem.space_limit){
+        if(this.problem.conf.space_limit){
             ret.push(`--max_memory=${this.problem.space_limit * 1024}`);
         }
 
