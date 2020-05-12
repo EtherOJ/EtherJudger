@@ -45,11 +45,11 @@ class Judger {
         );
         
         if(this.problem.conf.time_limit) {
-            ret.push(`--max_real_time=${this.problem.time_limit}`);
+            ret.push(`--max_real_time=${this.problem.conf.time_limit}`);
         }
         
         if(this.problem.conf.space_limit){
-            ret.push(`--max_memory=${this.problem.space_limit * 1024}`);
+            ret.push(`--max_memory=${this.problem.conf.space_limit * 1048576}`);
         }
 
         return ret;
