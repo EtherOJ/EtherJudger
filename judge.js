@@ -1,33 +1,33 @@
 const core = require('@actions/core');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-const fs = require('fs')
+const fs = require('fs');
+
+const ErrorEnum = {
+    SUCCESS: 0,
+    INVALID_CONFIG: -1,
+    FORK_FAILED: -2,
+    PTHREAD_FAILED: -3,
+    WAIT_FAILED: -4,
+    ROOT_REQUIRED: -5,
+    LOAD_SECCOMP_FAILED: -6,
+    SETRLIMIT_FAILED: -7,
+    DUP2_FAILED: -8,
+    SETUID_FAILED: -9,
+    EXECVE_FAILED: -10,
+    SPJ_ERROR: -11,
+};
+
+const ResultEnum = {
+    WRONG_ANSWER: -1,
+    CPU_TIME_LIMIT_EXCEEDED: 1,
+    REAL_TIME_LIMIT_EXCEEDED: 2,
+    MEMORY_LIMIT_EXCEEDED: 3,
+    RUNTIME_ERROR: 4,
+    SYSTEM_ERROR: 5,
+};
 
 class Judger {
-
-    ErrorEnum = {
-        SUCCESS: 0,
-        INVALID_CONFIG: -1,
-        FORK_FAILED: -2,
-        PTHREAD_FAILED: -3,
-        WAIT_FAILED: -4,
-        ROOT_REQUIRED: -5,
-        LOAD_SECCOMP_FAILED: -6,
-        SETRLIMIT_FAILED: -7,
-        DUP2_FAILED: -8,
-        SETUID_FAILED: -9,
-        EXECVE_FAILED: -10,
-        SPJ_ERROR: -11,
-    }
-
-    ResultEnum = {
-        WRONG_ANSWER: -1,
-        CPU_TIME_LIMIT_EXCEEDED: 1,
-        REAL_TIME_LIMIT_EXCEEDED: 2,
-        MEMORY_LIMIT_EXCEEDED: 3,
-        RUNTIME_ERROR: 4,
-        SYSTEM_ERROR: 5
-    };    
 
     constructor(prob, exe){
         this.problem = prob;
@@ -36,13 +36,13 @@ class Judger {
 
     buildExecArgs(exe, inf, ouf) {
         // console.log(this.problem)
-        const ret = []
+        const ret = [];
         ret.push(`--exe_path=${exe}`,
-                 `--input_path=${inf}`,
-                 `--output_path=${ouf}`,
-                 `--error_path=${ouf}`,
-                 `--max_output_size=134217728`,
-                 );
+            `--input_path=${inf}`,
+            `--output_path=${ouf}`,
+            `--error_path=${ouf}`,
+            `--max_output_size=${134217728}`,
+        );
         
         if(this.problem.conf.time_limit) {
             ret.push(`--max_real_time=${this.problem.time_limit}`);
@@ -99,7 +99,7 @@ class Judger {
             const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
             
             const result = await this.runSol(inf,outf);
-            console.log(result)
+            console.log(result);
             
             const ansC = fs.readFileSync(ansf).toString();
             const outC = fs.readFileSync(outf).toString();
@@ -110,5 +110,8 @@ class Judger {
         }
     }
 }
+
+Judger.ErrorEnum = ErrorEnum;
+Judger.ResultEnum = ResultEnum;
 
 module.exports = Judger;
