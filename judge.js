@@ -78,15 +78,13 @@ class Judger {
 
 
     async testCase(i, e) {
-
         function __fail(reason, result){
             console.log(result);
             core.setFailed(`[${i}] ${reason}`);
-            core.endGroup();
         }
-
-        core.startGroup(`Test Case ${i}`);
-
+        
+        console.log('Using test case:', e);
+        
         const outf = `${this.problem.baseDir}/outFile.out`;
         const inf  = `${this.problem.baseDir}/testcase/${e.inFile}`;
         const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
@@ -131,9 +129,8 @@ class Judger {
         }
 
         console.log(result);
-        core.endGroup();
     }
-    
+
     async testAll() {
         const caseKeys = Object.keys(this.problem.cases);
         caseKeys.sort((a, b) => {
@@ -142,8 +139,10 @@ class Judger {
             return ia - ib;
         });
         for(const i of caseKeys) {
+            core.startGroup(`Test Case ${i}`);
             const e = this.problem.cases[i];
             this.testCase(i, e);
+            core.endGroup();
         }
     }
 }
