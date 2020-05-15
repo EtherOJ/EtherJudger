@@ -151,7 +151,7 @@ class Judger {
         }
 
         const spc = this.problem.conf.score_per_testcase || (100/total | 0);
-        core.info(`${good} of ${total} cases passed, scored ${good * spc}`);
+        core.warning(`${good} of ${total} cases passed, scored ${good * spc}`);
     }
 }
 
