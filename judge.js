@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
+const CheckrunResult = require('./conclusion');
 
 const ErrorEnum = {
     SUCCESS: 0,
@@ -80,6 +81,7 @@ class Judger {
     async testCase(i, e) {
         function __fail(reason, result){
             console.log(result);
+            result.message = reason;
             core.setFailed(`[${i}] ${reason}`);
         }
         
@@ -97,7 +99,7 @@ class Judger {
             result = JSON.parse((await exec(scr)).stdout.trim());
         } catch (e) {
             __fail(e, {});
-            return;
+            return { message: e.toString() };
         }
         
         switch(+result.result) {
@@ -105,17 +107,17 @@ class Judger {
         case ResultEnum.CPU_TIME_LIMIT_EXCEEDED:
         case ResultEnum.REAL_TIME_LIMIT_EXCEEDED:
             __fail('Time Limit Exceeded', result);
-            return;
+            return result;
         case ResultEnum.MEMORY_LIMIT_EXCEEDED:
             __fail('Memory Limit Exceeded', result);
-            return;
+            return result;
         case ResultEnum.RUNTIME_ERROR:
             __fail('Runtime Error', result);
-            return;
+            return result;
         case ResultEnum.SYSTEM_ERROR:
         default:
             __fail(`System Error ${result.error}`, result);
-            return;
+            return result;
         }
 
         const ansC = fs.readFileSync(ansf).toString();
@@ -125,11 +127,12 @@ class Judger {
         if(diffResult) {
             result.result = ResultEnum.WRONG_ANSWER;
             __fail(diffResult, result);
-            return;
+            return result;
         }
 
         console.log(result);
-        return true;
+        result.message = 'Accepted';
+        return result;
     }
 
     async testAll() {
@@ -141,17 +144,32 @@ class Judger {
         });
 
         let [total, good] = [0, 0];
+        let rets = [];
         for(const i of caseKeys) {
             core.startGroup(`Test Case ${i}`);
 
             const ret = await this.testCase(i, this.problem.cases[i]);
-            total++, good += !!ret;
+            total++, good += (ret.result === 0);
+            rets.push(ret);
 
             core.endGroup();
         }
 
         const spc = this.problem.conf.score_per_testcase || (100/total | 0);
-        core.info(`${good} of ${total} cases passed, scored ${good * spc}`);
+        const summary = `${good} of ${total} cases passed, scored ${good * spc}`;
+        core.info(summary);
+
+        const pushedResult = new CheckrunResult(
+            rets.map(e => CheckrunResult.createAnnotation(
+                e.result != 0,
+                e.message,
+                e
+            )),
+            good === total,
+            summary
+        );
+        
+        await pushedResult.applyCheckrun();
     }
 }
 
