@@ -79,8 +79,8 @@ class Judger {
 
     async testCase(i, e) {
         function __fail(reason, result){
-            console.log(result);
-            core.setFailed(`[${i}] ${reason}`);
+            // console.log(result);
+            core.setFailed(`[${i}] ${reason}\n${JSON.stringify(result)}`);
         }
         
         console.log('Using test case:', e);
@@ -128,7 +128,8 @@ class Judger {
             return;
         }
 
-        console.log(result);
+        // console.log(result);
+        core.warning(`[${i}] Accepted\n${JSON.stringify(result)}`);
         return true;
     }
 
@@ -151,7 +152,12 @@ class Judger {
         }
 
         const spc = this.problem.conf.score_per_testcase || (100/total | 0);
-        core.warning(`${good} of ${total} cases passed, scored ${good * spc}`);
+        const rst = {
+            totalCase: total,
+            acceptedCase: good,
+            score: spc
+        };
+        core.warning(rst);
     }
 }
 
