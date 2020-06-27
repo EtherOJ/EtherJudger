@@ -8,7 +8,7 @@ inputs:
   problem-repo:
     description: 'Problem storage repository'
     required: true
-    default: 'https://github.com/pcovellite/problem'
+    default: 'https://github.com/EtherOJ/problems'
 outputs:
   total-time:
     description: 'Total used time'
