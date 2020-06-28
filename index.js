@@ -5,17 +5,24 @@ const exec = require('@actions/exec');
 const Problem = require('./problem');
 const Judger = require('./judge');
 
+function __fail(info, result = -1) {
+    core.setFailed(`Result\n${JSON.stringify({
+        result,
+        error: info,
+    })}`);
+}
+
 (async () => {
 
     const context = github.context;
     if (context.eventName !== 'pull_request') {
-        core.setFailed('This Action should be triggered in a Pull Request');
+        __fail('This Action should be triggered in a Pull Request', -13);
         return;
     }
 
     const token = process.env['GITHUB_TOKEN'] || '';
     if (token === '') {
-        core.setFailed('No GITHUB_TOKEN was provided');
+        __fail('No GITHUB_TOKEN was provided', -13);
         return;
     }
 
@@ -31,7 +38,7 @@ const Judger = require('./judge');
         await exec.exec(`git clone --depth=1 -b ${branch} ${dataRepo} pdata`);
         problem = new Problem(`${workdir}/pdata`);
     } catch (e) {
-        core.setFailed('Error processing problem');
+        __fail('Error processing problem');
         return;
     }
     core.endGroup();
@@ -43,14 +50,20 @@ const Judger = require('./judge');
         await exec.exec(`g++ ${src} -o ${destExecutable}`);
     } catch (e) {
         core.error(e);
-        core.setFailed('Compilation Error');
+        __fail('Compilation Error');
         return;
     }
     core.endGroup();
 
     const judger = new Judger(problem, destExecutable);
     try {
-        await judger.testAll();
+        const rst = await judger.testAll();
+        if(rst.accepted === 0) {
+            core.warning(`Result\n${JSON.stringify(rst)}`);
+        } else {
+            core.setFailed(`Result\n${JSON.stringify(rst)}`);
+        }
+        
     }catch(e){
         core.setFailed(e);
     }
