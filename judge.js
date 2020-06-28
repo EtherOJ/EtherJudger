@@ -78,13 +78,13 @@ class Judger {
 
 
     async testCase(i, e) {
-        function __fail(reason, result){
-            // console.log(result);
-            core.setFailed(`[${i}] ${reason}\n${JSON.stringify(result)}`);
-        }
-        
         console.log('Using test case:', e);
         
+        const info = {
+            id: i,
+            case: e,
+        };
+
         const outf = `${this.problem.baseDir}/outFile.out`;
         const inf  = `${this.problem.baseDir}/testcase/${e.inFile}`;
         const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
@@ -96,41 +96,41 @@ class Judger {
             const scr = `sudo ${__dirname}/libjudger.so ${args.join(' ')}`;
             result = JSON.parse((await exec(scr)).stdout.trim());
         } catch (e) {
-            __fail(e, {});
-            return;
+            return {
+                ...info,
+                result: ResultEnum.SYSTEM_ERROR,
+                error: e
+            };
         }
         
-        switch(+result.result) {
-        case 0: break;
-        case ResultEnum.CPU_TIME_LIMIT_EXCEEDED:
-        case ResultEnum.REAL_TIME_LIMIT_EXCEEDED:
-            __fail('Time Limit Exceeded', result);
-            return;
-        case ResultEnum.MEMORY_LIMIT_EXCEEDED:
-            __fail('Memory Limit Exceeded', result);
-            return;
-        case ResultEnum.RUNTIME_ERROR:
-            __fail('Runtime Error', result);
-            return;
-        case ResultEnum.SYSTEM_ERROR:
-        default:
-            __fail(`System Error ${result.error}`, result);
-            return;
+        if(result.result != 0) {
+            return {
+                ...info,
+                result: result.result,
+                detail: result,
+            };
         }
 
         const ansC = fs.readFileSync(ansf).toString();
         const outC = fs.readFileSync(outf).toString();
         
         const diffResult = this.diff(ansC, outC);
+        
         if(diffResult) {
             result.result = ResultEnum.WRONG_ANSWER;
-            __fail(diffResult, result);
-            return;
+            return {
+                ...info,
+                result: ResultEnum.WRONG_ANSWER,
+                detail: result,
+                error: diffResult,
+            };
         }
 
-        // console.log(result);
-        core.warning(`[${i}] Accepted\n${JSON.stringify(result)}`);
-        return true;
+        return {
+            ...info,
+            result: 0,
+            detail: result,
+        };
     }
 
     async testAll() {
@@ -142,22 +142,35 @@ class Judger {
         });
 
         let [total, good] = [0, 0];
+        let cases = [];
         for(const i of caseKeys) {
             core.startGroup(`Test Case ${i}`);
+            
+            let ret;
+            try {
+                ret = await this.testCase(i, this.problem.cases[i]);
+            } catch (e) {
+                ret = {
+                    id: i,
+                    case: this.problem.cases[i],
+                    result: ResultEnum.SYSTEM_ERROR,
+                    error: e,
+                };
+            }
+            
+            total++, good += (ret.result == 0);
 
-            const ret = await this.testCase(i, this.problem.cases[i]);
-            total++, good += !!ret;
+            cases.push(ret);
 
             core.endGroup();
         }
 
-        const spc = this.problem.conf.score_per_testcase || (100/total | 0);
-        const rst = {
-            totalCase: total,
-            acceptedCase: good,
-            score: spc
+        return {
+            result: total !== good,
+            total: total,
+            accepted: good,
+            cases,
         };
-        core.warning(rst);
     }
 }
 
