@@ -1,7 +1,7 @@
 name: 'Judger for EtherOJ'
 description: 'Judge a test case'
-inputs:
-outputs:
+inputs: {}
+outputs: {}
 runs:
   using: 'node12'
   main: 'index.js'
