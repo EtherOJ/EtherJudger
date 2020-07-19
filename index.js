@@ -35,17 +35,18 @@ function __fail(info, result = -1) {
     let problem;
     try {
         const k = await fs.readFile('.problem');
-        const [remote, ref] = k.toString().split(' ');
+        const [remote, ref] = k.toString().trim().split(' ');
         await exec.exec('git init pdata');
         const cwd = [undefined, { cwd : 'pdata' }];
 
         await exec.exec(`git remote add origin ${remote}`, ...cwd);
-        await exec.exec(`git fetch +${ref}:refs/remotes/origin/master`, ...cwd);
+        await exec.exec(`git fetch origin +${ref}:refs/remotes/origin/master`, ...cwd);
         await exec.exec('git checkout -B master refs/remotes/origin/master', ...cwd);
         problem = new Problem(`${workdir}/pdata`);
         
     } catch (e) {
-        __fail('Error processing problem', -15);
+        __fail(`Error processing problem:: ${e}`, -15);
+        return;
     }
 
     core.endGroup();
