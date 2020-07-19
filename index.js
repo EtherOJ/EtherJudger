@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const exec = require('@actions/exec');
+const fs = require('fs').promises;
 
 const Problem = require('./problem');
 const Judger = require('./judge');
@@ -27,20 +28,26 @@ function __fail(info, result = -1) {
     }
 
     const workdir = process.env['GITHUB_WORKSPACE'];
-    const branch  = process.env['GITHUB_BASE_REF'];
 
-    const src = core.getInput('source');
-    const dataRepo = core.getInput('problem-repo');
+    const src = 'solution.cpp';
 
-    let problem;
     core.startGroup('Checkout problem data');
+    let problem;
     try {
-        await exec.exec(`git clone --depth=1 -b ${branch} ${dataRepo} pdata`);
+        const k = await fs.readFile('.problem');
+        const [remote, ref] = k.toString().split(' ');
+        await exec.exec('git init pdata');
+        const cwd = [undefined, { cwd : 'pdata' }];
+
+        await exec.exec(`git remote add origin ${remote}`, ...cwd);
+        await exec.exec(`git fetch +${ref}:refs/remotes/origin/master`, ...cwd);
+        await exec.exec('git checkout -B master refs/remotes/origin/master', ...cwd);
         problem = new Problem(`${workdir}/pdata`);
+        
     } catch (e) {
-        __fail('Error processing problem');
-        return;
+        __fail('Error processing problem', -15);
     }
+
     core.endGroup();
 
     const destExecutable = `${__dirname}/solution.o`;
