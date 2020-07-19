@@ -10,7 +10,7 @@ function __fail(info, result = -1) {
     core.setFailed(`Result\n${JSON.stringify({
         result,
         error: info,
-    })}`);
+    }, null, 2)}`);
 }
 
 (async () => {
@@ -66,10 +66,10 @@ function __fail(info, result = -1) {
     const judger = new Judger(problem, destExecutable);
     try {
         const rst = await judger.testAll();
-        if(rst.accepted === 0) {
-            core.warning(`Result\n${JSON.stringify(rst)}`);
+        if(rst.result === 'Accepted') {
+            core.warning(`Result\n${JSON.stringify(rst, null, 2)}`);
         } else {
-            core.setFailed(`Result\n${JSON.stringify(rst)}`);
+            core.setFailed(`Result\n${JSON.stringify(rst, null, 2)}`);
         }
         
     }catch(e){

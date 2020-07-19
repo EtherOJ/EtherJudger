@@ -159,14 +159,13 @@ class Judger {
             }
             
             total++, good += (ret.result == 0);
-
             cases.push(ret);
 
             core.endGroup();
         }
 
         return {
-            result: total !== good,
+            result: total === good? 'Accepted': 'Unaccepted',
             total: total,
             accepted: good,
             cases,
