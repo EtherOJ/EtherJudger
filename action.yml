@@ -1,21 +1,7 @@
-name: 'Judger for Covellite'
+name: 'Judger for EtherOJ'
 description: 'Judge a test case'
 inputs:
-  source:
-    description: 'Source file path'
-    required: true
-    default: 'solution.cpp'
-  problem-repo:
-    description: 'Problem storage repository'
-    required: true
-    default: 'https://github.com/EtherOJ/problems'
 outputs:
-  total-time:
-    description: 'Total used time'
-  result:
-    description: 'Result'
-  result_friendly:
-    description: 'Well-formatted result'
 runs:
   using: 'node12'
   main: 'index.js'
