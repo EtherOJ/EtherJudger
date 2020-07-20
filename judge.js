@@ -3,21 +3,6 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 
-const ErrorEnum = {
-    SUCCESS: 0,
-    INVALID_CONFIG: -1,
-    FORK_FAILED: -2,
-    PTHREAD_FAILED: -3,
-    WAIT_FAILED: -4,
-    ROOT_REQUIRED: -5,
-    LOAD_SECCOMP_FAILED: -6,
-    SETRLIMIT_FAILED: -7,
-    DUP2_FAILED: -8,
-    SETUID_FAILED: -9,
-    EXECVE_FAILED: -10,
-    SPJ_ERROR: -11,
-};
-
 const ResultEnum = {
     WRONG_ANSWER: -1,
     CPU_TIME_LIMIT_EXCEEDED: 1,
@@ -99,7 +84,7 @@ class Judger {
             return {
                 ...info,
                 result: ResultEnum.SYSTEM_ERROR,
-                error: e
+                error_message: e
             };
         }
         
@@ -122,7 +107,7 @@ class Judger {
                 ...info,
                 result: ResultEnum.WRONG_ANSWER,
                 detail: result,
-                error: diffResult,
+                error_message: diffResult,
             };
         }
 
@@ -154,7 +139,7 @@ class Judger {
                     id: i,
                     case: this.problem.cases[i],
                     result: ResultEnum.SYSTEM_ERROR,
-                    error: e,
+                    error_message: e,
                 };
             }
             
@@ -173,7 +158,5 @@ class Judger {
     }
 }
 
-Judger.ErrorEnum = ErrorEnum;
 Judger.ResultEnum = ResultEnum;
-
 module.exports = Judger;
