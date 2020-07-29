@@ -87,6 +87,10 @@ function __fail(info, result = -1) {
     const judger = new Judger(problem, destExecutable);
     try {
         const rst = await judger.testAll();
+        if(rst.total === 0) {
+            __fail('No testcases provided', ErrorEnum.CHECKOUT_FAILED);
+            return;
+        }
         if(rst.result === 'Accepted') {
             core.warning(`Result\n${JSON.stringify(rst, null, 2)}`);
         } else {
