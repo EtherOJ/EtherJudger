@@ -19,7 +19,7 @@ class Judger {
         this.executable = exe;
     }
 
-    buildExecArgs(exe, inf, ouf) {
+    buildExecArgs(exe, inf, ouf, { used_time }) {
         // console.log(this.problem)
         const ret = [];
         ret.push(`--exe_path=${exe}`,
@@ -28,9 +28,15 @@ class Judger {
             `--error_path=${ouf}`,
             `--max_output_size=${134217728}`,
         );
-        
+
         if(this.problem.conf.time_limit) {
-            ret.push(`--max_real_time=${this.problem.conf.time_limit}`);
+            let timeLimit = this.problem.conf.time_limit;
+            if(this.problem.conf.timing_mode === 'total') {
+                timeLimit -= used_time;
+            }
+            if(timeLimit < 0) timeLimit = 0;
+            
+            ret.push(`--max_real_time=${timeLimit}`);
         }
         
         if(this.problem.conf.space_limit){
@@ -62,7 +68,7 @@ class Judger {
 
 
 
-    async testCase(i, e) {
+    async testCase(i, e, { used_time }) {
         console.log('Using test case:', e);
         
         const info = {
@@ -74,7 +80,7 @@ class Judger {
         const inf  = `${this.problem.baseDir}/testcase/${e.inFile}`;
         const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
         
-        const args = this.buildExecArgs(this.executable, inf, outf);
+        const args = this.buildExecArgs(this.executable, inf, outf, used_time);
 
         let result;
         try {
@@ -128,12 +134,16 @@ class Judger {
 
         let [total, good] = [0, 0];
         let cases = [];
+        let stats = {
+            used_time: 0
+        };
         for(const i of caseKeys) {
             core.startGroup(`Test Case ${i}`);
             
             let ret;
             try {
-                ret = await this.testCase(i, this.problem.cases[i]);
+                ret = await this.testCase(i, this.problem.cases[i], stats);
+                stats.used_time += ret.detail.real_time;
             } catch (e) {
                 ret = {
                     id: i,
@@ -154,6 +164,7 @@ class Judger {
             total: total,
             accepted: good,
             cases,
+            stats,
         };
     }
 }
