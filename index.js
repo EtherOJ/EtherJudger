@@ -1,6 +1,8 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const exec = require('@actions/exec');
+const util = require('util');
+const execw = util.promisify(require('child_process').exec);
 const fs = require('fs').promises;
 
 const Problem = require('./problem');
@@ -25,15 +27,15 @@ const ErrorEnum = {
     COMPILE_ERROR: -274,
 };
 
+let env = {};
 function __fail(info, result = -1) {
     core.setFailed(`Result\n${JSON.stringify({
         result: 'Error',
+        env,
         error: result,
         error_message: info,
     }, null, 2)}`);
 }
-
-
 
 (async () => {
 
@@ -53,6 +55,24 @@ function __fail(info, result = -1) {
 
     const src = 'solution.cpp';
 
+    core.startGroup('Collect Environment Data');
+    async function execr(...args) {
+        return (await execw(...args)).stdout.trim();
+    }
+
+    const vlibjudger = await execr(`${__dirname}/libjudger.so --version`);
+    const vcompiler = (await execr('g++ --version')).split('\n')[0];
+
+    env = {
+        timestamp: +new Date(),
+        judger: context.action,
+        libjudger_version: vlibjudger,
+        gcc_version: vcompiler,
+        commit_sha: context.sha,
+        repository: context.repo,
+    };
+    core.endGroup();
+    
     core.startGroup('Checkout problem data');
     let problem;
     try {
@@ -84,7 +104,7 @@ function __fail(info, result = -1) {
     }
     core.endGroup();
 
-    const judger = new Judger(problem, destExecutable);
+    const judger = new Judger(problem, destExecutable, env);
     try {
         const rst = await judger.testAll();
         if(rst.total === 0) {

@@ -14,9 +14,10 @@ const ResultEnum = {
 
 class Judger {
 
-    constructor(prob, exe){
+    constructor(prob, exe, env){
         this.problem = prob;
         this.executable = exe;
+        this.env = env;
     }
 
     buildExecArgs(exe, inf, ouf, { used_time }) {
@@ -166,6 +167,7 @@ class Judger {
             total: total,
             accepted: good,
             cases,
+            env: this.env,
             stats,
         };
     }
