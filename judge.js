@@ -68,7 +68,7 @@ class Judger {
 
 
 
-    async testCase(i, e, { used_time }) {
+    async testCase(i, e, stats) {
         console.log('Using test case:', e);
         
         const info = {
@@ -80,7 +80,7 @@ class Judger {
         const inf  = `${this.problem.baseDir}/testcase/${e.inFile}`;
         const ansf = `${this.problem.baseDir}/testcase/${e.ansFile}`;
         
-        const args = this.buildExecArgs(this.executable, inf, outf, used_time);
+        const args = this.buildExecArgs(this.executable, inf, outf, stats);
 
         let result;
         try {
@@ -143,7 +143,9 @@ class Judger {
             let ret;
             try {
                 ret = await this.testCase(i, this.problem.cases[i], stats);
-                stats.used_time += ret.detail.real_time;
+                if(ret.detail) {
+                    stats.used_time += (ret.detail.real_time || 0);
+                }
             } catch (e) {
                 ret = {
                     id: i,
