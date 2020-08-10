@@ -4,16 +4,26 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "ncc build index.js -o dist"
   },
   "keywords": [],
-  "author": "Xiaodai Dai",
-  "license": "ISC",
+  "author": "EtherOJ",
+  "license": "MIT",
   "dependencies": {
     "@actions/artifact": "^0.3.1",
     "@actions/core": "^1.2.4",
     "@actions/exec": "^1.0.4",
     "@actions/github": "^2.2.0",
     "yaml": "^1.9.2"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.3",
+    "husky": "^4.2.5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run prepare && git add dist/"
+    }
   }
 }
